@@ -1,0 +1,28 @@
+node {
+   def mvnHome
+   def javaHome
+   stage('Preparation') { // for display purposes
+      // Get some code from a GitHub repository
+      git (url: 'https://github.com/anillogix/ci-demo2.git', credentialId: 'GitUser')
+      // Get the Maven tool.
+      // ** NOTE: This 'M3' Maven tool must be configured
+      // **       in the global configuration.           
+      mvnHome = tool 'maven'
+      javaHome = tool 'jdk8'
+   }
+   stage('Build') {
+       
+      // Run the maven build
+      if (isUnix()) {
+          sh "export JAVA_HOME=${javaHome}"
+         sh "'${mvnHome}/bin/mvn' -f pom.xml clean package"
+      } else {
+         bat(/set JAVA_HOME='${javaHome}'/)
+         bat(/"${mvnHome}\bin\mvn" -f pom.xml clean package/)
+      }
+   }
+   stage('Results') {
+      junit '**/target/surefire-reports/TEST-*.xml'
+      archive 'target/*.jar'
+   }
+}
